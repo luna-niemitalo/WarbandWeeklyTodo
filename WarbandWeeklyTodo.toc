@@ -1,0 +1,7 @@
+## Interface: 110100
+## Title: Warband Weekly Todo
+## Notes: Track and display character data (e.g., currency) across your characters.
+## Version: 1.0.7
+## SavedVariables: WarbandWeeklyTodoDB
+embeds.xml
+WarbandWeeklyTodo.lua
