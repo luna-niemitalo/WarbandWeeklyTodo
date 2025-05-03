@@ -7,4 +7,6 @@
     <Include file="Libs/AceDB-3.0/AceDB-3.0.xml"/>
     <Include file="Libs/AceGUI-3.0/AceGUI-3.0.xml"/>
     <Include file="Libs/LibDBIcon-1.0/embeds.xml"/>
+    <Script file="WarbandWeeklyTodo.lua"/>
+    <Script file="WarbandWeeklyTodo_Window.lua"/>
 </Ui>

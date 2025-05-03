@@ -6,3 +6,4 @@
 ## SavedVariables: WarbandWeeklyTodoDB
 embeds.xml
 WarbandWeeklyTodo.lua
+WarbandWeeklyTodo_Window.lua
