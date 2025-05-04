@@ -58,6 +58,16 @@ _G.WWWindow = {
         delveHeader:SetWidth(90)
         headerGroup:AddChild(delveHeader)
 
+        -- Upgrades header
+        local upgradeHeader = AceGUI:Create("Label")
+        if not upgradeHeader then
+            print("Error: Failed to create upgrade header")
+            return nil
+        end
+        upgradeHeader:SetText("Upgrades")
+        upgradeHeader:SetWidth(120)
+        headerGroup:AddChild(upgradeHeader)
+
         return headerGroup
     end,
 
@@ -131,6 +141,42 @@ _G.WWWindow = {
         delveLabel:SetText(delveText)
         delveLabel:SetWidth(90)
         rowGroup:AddChild(delveLabel)
+
+        -- Upgrade data
+        local upgradeLabel = AceGUI:Create("Label")
+        if not upgradeLabel then
+            print("Error: Failed to create upgrade label")
+            return nil
+        end
+
+        local upgradeText = ""
+        if data.equipmentUpgrades and data.equipmentUpgrades.items and #data.equipmentUpgrades.items > 0 then
+            -- Show number of upgradeable items
+            upgradeText = string.format("%d items", #data.equipmentUpgrades.items)
+            
+            -- Add crest costs if any
+            if data.equipmentUpgrades.crestCosts then
+                local crestText = ""
+                for crestType, cost in pairs(data.equipmentUpgrades.crestCosts) do
+                    if cost.count > 0 then
+                        local info = C_CurrencyInfo and C_CurrencyInfo.GetCurrencyInfo(cost.currencyID)
+                        if info and info.iconFileID then
+                            crestText = crestText .. string.format(" |T%d:20:20:0:0:64:64:4:60:4:60|t%d", 
+                                info.iconFileID, cost.count)
+                        end
+                    end
+                end
+                if crestText ~= "" then
+                    upgradeText = upgradeText .. crestText
+                end
+            end
+        else
+            upgradeText = "None"
+        end
+
+        upgradeLabel:SetText(upgradeText)
+        upgradeLabel:SetWidth(120)
+        rowGroup:AddChild(upgradeLabel)
 
         return rowGroup
     end,
