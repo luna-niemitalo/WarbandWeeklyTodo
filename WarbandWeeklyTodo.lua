@@ -64,7 +64,6 @@ local iconData = {
     text = "WWTodo",
     icon = "Interface\\Icons\\INV_Misc_QuestionMark", -- Replace with your own icon if desired.
     OnClick = function(clickedframe, button)
-        print("Minimap icon clicked")
         WarbandWeeklyTodo:ShowWindow()
     end,
     OnTooltipShow = function(tooltip)
@@ -74,7 +73,6 @@ local iconData = {
 }
 
 function WarbandWeeklyTodo:OnInitialize()
-    print("WarbandWeeklyTodo:OnInitialize")
     -- Create the AceDB database. Global table stores character data.
     self.db = LibStub("AceDB-3.0"):New("WarbandWeeklyTodoDB", defaults)
 
@@ -87,17 +85,10 @@ function WarbandWeeklyTodo:OnInitialize()
 
     -- Register chat command
     self:RegisterChatCommand("wwtodo", "ChatCommand")
-    
-    -- Debug print all available modules
-    print("Available modules during initialization:")
-    for name, module in self:IterateModules() do
-        print("-", name)
-    end
 end
 
 -- Function to update character data
 function WarbandWeeklyTodo:UpdateCharacterData()
-    print("WarbandWeeklyTodo:UpdateCharacterData")
     -- Get a unique key for the character.
     local name = UnitName("player")
     local realm = GetRealmName()
@@ -255,7 +246,6 @@ function WarbandWeeklyTodo:UpdateCharacterData()
 end
 
 function WarbandWeeklyTodo:OnPlayerLogin()
-    print("WarbandWeeklyTodo:OnPlayerLogin")
     -- Add a small delay to ensure all data is loaded
     C_Timer.After(1, function()
         self:UpdateCharacterData()
@@ -264,19 +254,10 @@ end
 
 -- Main window creation function
 function WarbandWeeklyTodo:ShowWindow()
-    print("WarbandWeeklyTodo:ShowWindow called")
-    
     -- Update data before showing the window
     self:UpdateCharacterData()
     
-    -- Debug print all available modules
-    print("Available modules:")
-    for name, module in self:IterateModules() do
-        print("-", name)
-    end
-    
     if _G.WWWindow then
-        print("Window module found")
         _G.WWWindow.ShowWindow(self, currencyIDs, questIDs, delveIcons)
     else
         print("Error: Window module not found")
@@ -285,7 +266,6 @@ end
 
 -- Optional: Allow the minimap icon to be toggled via a chat command.
 function WarbandWeeklyTodo:ChatCommand(input)
-    print("ChatCommand called with input:", input)
     if input:trim() == "toggle" then
         local hidden = self.db.profile.minimap.hide
         self.db.profile.minimap.hide = not hidden
@@ -301,6 +281,5 @@ function WarbandWeeklyTodo:ChatCommand(input)
 end
 
 function WarbandWeeklyTodo:OnEnable()
-    print("WarbandWeeklyTodo:OnEnable")
     -- Additional enable code if needed
 end

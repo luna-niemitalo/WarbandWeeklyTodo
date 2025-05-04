@@ -2,7 +2,6 @@ local AceGUI = LibStub("AceGUI-3.0")
 
 _G.WWWindow = {
     CreateHeaderRow = function(currencyIDs, questIDs)
-        print("CreateHeaderRow called")
         local headerGroup = AceGUI:Create("SimpleGroup")
         if not headerGroup then
             print("Error: Failed to create header group")
@@ -72,7 +71,6 @@ _G.WWWindow = {
     end,
 
     CreateCharacterRow = function(key, data, currencyIDs, questIDs, delveIcons)
-        print("CreateCharacterRow called for key:", key)
         local rowGroup = AceGUI:Create("SimpleGroup")
         if not rowGroup then
             print("Error: Failed to create row group for character:", key)
@@ -198,8 +196,6 @@ _G.WWWindow = {
     end,
 
     ShowWindow = function(addon, currencyIDs, questIDs, delveIcons)
-        print("WWWindow:ShowWindow called")
-        
         -- Check if AceGUI is properly loaded
         if not AceGUI then
             print("Error: AceGUI library not found")
@@ -213,8 +209,6 @@ _G.WWWindow = {
             return
         end
         
-        print("Main frame created successfully")
-        
         frame:SetTitle("Warband Weekly Todo - Data")
         frame:SetStatusText("Data across all characters")
         frame:SetLayout("Flow")
@@ -225,7 +219,6 @@ _G.WWWindow = {
         local header = _G.WWWindow.CreateHeaderRow(currencyIDs, questIDs)
         if header then
             frame:AddChild(header)
-            print("Header row added successfully")
         else
             print("Error: Failed to create header row")
         end
@@ -241,8 +234,5 @@ _G.WWWindow = {
                 print("Error: Failed to create row for character:", key)
             end
         end
-        print("Added", characterCount, "character rows")
     end
 }
-
-print("WWWindow module loaded") 
