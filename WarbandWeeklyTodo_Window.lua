@@ -1,6 +1,30 @@
 ---@diagnostic disable: undefined-global
 local AceGUI = LibStub("AceGUI-3.0")
 
+-- Define slot headers at module level
+local SLOT_HEADERS = {
+    [1] = "Hed", -- Head
+    [2] = "Nek", -- Neck
+    [3] = "Shl", -- Shoulder
+    [5] = "Cst", -- Chest
+    [6] = "Wst", -- Waist
+    [7] = "Lgs", -- Legs
+    [8] = "Fet", -- Feet
+    [9] = "Wrs", -- Wrist
+    [10] = "Hnd", -- Hands
+    [11] = "Fg1", -- Finger1
+    [12] = "Fg2", -- Finger2
+    [13] = "Tr1", -- Trinket1
+    [14] = "Tr2", -- Trinket2
+    [15] = "Bck", -- Back
+    [16] = "Mh", -- MainHand
+    [17] = "Oh", -- OffHand
+    [18] = "Rng" -- Ranged
+}
+
+-- Store the active window reference
+local activeWindow = nil
+
 _G.WWWindow = {
     CreateHeaderRow = function(currencyIDs, questIDs)
         local headerGroup = AceGUI:Create("SimpleGroup")
@@ -64,15 +88,17 @@ _G.WWWindow = {
         delveHeader:SetWidth(90)
         headerGroup:AddChild(delveHeader)
 
-        -- Upgrades header
-        local upgradeHeader = AceGUI:Create("Label")
-        if not upgradeHeader then
-            print("Error: Failed to create upgrade header")
-            return nil
+        -- Item slot headers (excluding shirt and tabard)
+        for slotID, slotName in pairs(SLOT_HEADERS) do
+            local slotLabel = AceGUI:Create("Label")
+            if not slotLabel then
+                print("Error: Failed to create slot label for:", slotName)
+                return nil
+            end
+            slotLabel:SetText(slotName)
+            slotLabel:SetWidth(25) -- Reduced width for shorter names
+            headerGroup:AddChild(slotLabel)
         end
-        upgradeHeader:SetText("Upgrades")
-        upgradeHeader:SetWidth(120)
-        headerGroup:AddChild(upgradeHeader)
 
         return headerGroup
     end,
@@ -147,41 +173,40 @@ _G.WWWindow = {
         delveLabel:SetWidth(90)
         rowGroup:AddChild(delveLabel)
 
-        -- Upgrade data
-        local upgradeLabel = AceGUI:Create("Label")
-        if not upgradeLabel then
-            print("Error: Failed to create upgrade label")
-            return nil
-        end
+        -- Item slot status
+        for slotID, slotName in pairs(SLOT_HEADERS) do
+            local slotLabel = AceGUI:Create("Label")
+            if not slotLabel then
+                print("Error: Failed to create slot status label for:", slotName)
+                return nil
+            end
 
-        local upgradeText = ""
-        if data.equipmentUpgrades and data.equipmentUpgrades.items and #data.equipmentUpgrades.items > 0 then
-            -- Show number of upgradeable items
-            upgradeText = string.format("%d items", #data.equipmentUpgrades.items)
-            
-            -- Add crest costs if any
-            if data.equipmentUpgrades.crestCosts then
-                local crestText = ""
-                for crestType, cost in pairs(data.equipmentUpgrades.crestCosts) do
-                    if cost.count > 0 then
-                        local info = C_CurrencyInfo and C_CurrencyInfo.GetCurrencyInfo(cost.currencyID)
-                        if info and info.iconFileID then
-                            crestText = crestText .. string.format(" |T%d:20:20:0:0:64:64:4:60:4:60|t%d", 
-                                info.iconFileID, cost.count)
+            -- Check if this slot has an upgradeable item
+            local hasUpgrade = false
+            if data.equipmentUpgrades and data.equipmentUpgrades.items then
+                for _, item in ipairs(data.equipmentUpgrades.items) do
+                    if item.slotName == slotName then
+                        -- Check if we have enough crests for the upgrade
+                        local hasEnoughCrests = true
+                        if item.requiredCrest ~= "None" then
+                            local crestCost = data.equipmentUpgrades.crestCosts[item.requiredCrest]
+                            local currencyInfo = data.currencies[crestCost.currencyID]
+                            if not currencyInfo or currencyInfo.quantity < crestCost.count then
+                                hasEnoughCrests = false
+                            end
                         end
+                        if hasEnoughCrests then
+                            hasUpgrade = true
+                        end
+                        break
                     end
                 end
-                if crestText ~= "" then
-                    upgradeText = upgradeText .. crestText
-                end
             end
-        else
-            upgradeText = "None"
-        end
 
-        upgradeLabel:SetText(upgradeText)
-        upgradeLabel:SetWidth(120)
-        rowGroup:AddChild(upgradeLabel)
+            slotLabel:SetText(hasUpgrade and "^" or "")
+            slotLabel:SetWidth(25) -- Reduced width for shorter names
+            rowGroup:AddChild(slotLabel)
+        end
 
         return rowGroup
     end,
@@ -208,6 +233,13 @@ _G.WWWindow = {
             print("Error: AceGUI library not found")
             return
         end
+
+        -- If a window already exists, bring it to front and return
+        if activeWindow then
+            activeWindow:Show()
+            activeWindow:SetStatusText("Data across all characters")
+            return
+        end
         
         -- Create the main frame
         local frame = AceGUI:Create("Frame")
@@ -215,11 +247,14 @@ _G.WWWindow = {
             print("Error: Failed to create main frame")
             return
         end
+
+        -- Store the window reference
+        activeWindow = frame
         
         frame:SetTitle("Warband Weekly Todo - Data")
         frame:SetStatusText("Data across all characters")
         frame:SetLayout("Flow")
-        frame:SetWidth(800)
+        frame:SetWidth(920)
         frame:SetHeight(400)
 
         -- Add header row
@@ -241,5 +276,11 @@ _G.WWWindow = {
                 print("Error: Failed to create row for character:", key)
             end
         end
+
+        -- Set up close callback to clear the window reference
+        frame:SetCallback("OnClose", function(widget)
+            AceGUI:Release(widget)
+            activeWindow = nil
+        end)
     end
 }
