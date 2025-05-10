@@ -3,23 +3,23 @@ local AceGUI = LibStub("AceGUI-3.0")
 
 -- Define slot headers at module level
 local SLOT_HEADERS = {
-    [1] = "Hed", -- Head
-    [2] = "Nek", -- Neck
-    [3] = "Shl", -- Shoulder
-    [5] = "Cst", -- Chest
-    [6] = "Wst", -- Waist
-    [7] = "Lgs", -- Legs
-    [8] = "Fet", -- Feet
-    [9] = "Wrs", -- Wrist
-    [10] = "Hnd", -- Hands
-    [11] = "Fg1", -- Finger1
-    [12] = "Fg2", -- Finger2
-    [13] = "Tr1", -- Trinket1
-    [14] = "Tr2", -- Trinket2
-    [15] = "Bck", -- Back
-    [16] = "Mh", -- MainHand
-    [17] = "Oh", -- OffHand
-    [18] = "Rng" -- Ranged
+    { id = 1, short = "Hed", full = "Head" },
+    { id = 2, short = "Nek", full = "Neck" },
+    { id = 3, short = "Shl", full = "Shoulder" },
+    { id = 5, short = "Cst", full = "Chest" },
+    { id = 6, short = "Wst", full = "Waist" },
+    { id = 7, short = "Lgs", full = "Legs" },
+    { id = 8, short = "Fet", full = "Feet" },
+    { id = 9, short = "Wrs", full = "Wrist" },
+    { id = 10, short = "Hnd", full = "Hands" },
+    { id = 11, short = "Fg1", full = "Finger1" },
+    { id = 12, short = "Fg2", full = "Finger2" },
+    { id = 13, short = "Tr1", full = "Trinket1" },
+    { id = 14, short = "Tr2", full = "Trinket2" },
+    { id = 15, short = "Bck", full = "Back" },
+    { id = 16, short = "Mh", full = "MainHand" },
+    { id = 17, short = "Oh", full = "OffHand" },
+    { id = 18, short = "Rng", full = "Ranged" }
 }
 
 -- Store the active window reference
@@ -89,13 +89,13 @@ _G.WWWindow = {
         headerGroup:AddChild(delveHeader)
 
         -- Item slot headers (excluding shirt and tabard)
-        for slotID, slotName in pairs(SLOT_HEADERS) do
+        for _, slotInfo in ipairs(SLOT_HEADERS) do
             local slotLabel = AceGUI:Create("Label")
             if not slotLabel then
-                print("Error: Failed to create slot label for:", slotName)
+                print("Error: Failed to create slot label for:", slotInfo.short)
                 return nil
             end
-            slotLabel:SetText(slotName)
+            slotLabel:SetText(slotInfo.short)
             slotLabel:SetWidth(25) -- Reduced width for shorter names
             headerGroup:AddChild(slotLabel)
         end
@@ -174,10 +174,10 @@ _G.WWWindow = {
         rowGroup:AddChild(delveLabel)
 
         -- Item slot status
-        for slotID, slotName in pairs(SLOT_HEADERS) do
+        for _, slotInfo in ipairs(SLOT_HEADERS) do
             local slotLabel = AceGUI:Create("Label")
             if not slotLabel then
-                print("Error: Failed to create slot status label for:", slotName)
+                print("Error: Failed to create slot status label for:", slotInfo.short)
                 return nil
             end
 
@@ -185,13 +185,17 @@ _G.WWWindow = {
             local hasUpgrade = false
             if data.equipmentUpgrades and data.equipmentUpgrades.items then
                 for _, item in ipairs(data.equipmentUpgrades.items) do
-                    if item.slotName == slotName then
+                    if item.slotName == slotInfo.full then
                         -- Check if we have enough crests for the upgrade
                         local hasEnoughCrests = true
-                        if item.requiredCrest ~= "None" then
-                            local crestCost = data.equipmentUpgrades.crestCosts[item.requiredCrest]
-                            local currencyInfo = data.currencies[crestCost.currencyID]
-                            if not currencyInfo or currencyInfo.quantity < crestCost.count then
+                        if item.requiredCrest and item.requiredCrest ~= "None" then
+                            local crestCost = data.equipmentUpgrades.crestCosts and data.equipmentUpgrades.crestCosts[item.requiredCrest]
+                            if crestCost and crestCost.currencyID then
+                                local currencyInfo = data.currencies and data.currencies[crestCost.currencyID]
+                                if not currencyInfo or currencyInfo.quantity < crestCost.count then
+                                    hasEnoughCrests = false
+                                end
+                            else
                                 hasEnoughCrests = false
                             end
                         end
@@ -203,7 +207,7 @@ _G.WWWindow = {
                 end
             end
 
-            slotLabel:SetText(hasUpgrade and "^" or "")
+            slotLabel:SetImage(hasUpgrade and "Interface\\Buttons\\Arrow-Up-Up" or "")
             slotLabel:SetWidth(25) -- Reduced width for shorter names
             rowGroup:AddChild(slotLabel)
         end
