@@ -2,7 +2,8 @@
 ## Title: Warband Weekly Todo
 ## Author: Luna
 ## Notes: Track and display character data (e.g., currency) across your characters.
-## Version: 1.0.7
+## Version: 1.1.0
 ## SavedVariables: WarbandWeeklyTodoDB
 embeds.xml
 WarbandWeeklyTodo.lua
+WarbandWeeklyTodo_Window.lua
