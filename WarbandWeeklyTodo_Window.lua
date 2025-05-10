@@ -1,3 +1,4 @@
+---@diagnostic disable: undefined-global
 local AceGUI = LibStub("AceGUI-3.0")
 
 _G.WWWindow = {
@@ -42,7 +43,13 @@ _G.WWWindow = {
                 print("Error: Failed to create quest label for ID:", qid)
                 return nil
             end
-            questLabel:SetText("Q" .. qid)
+            if qid == 76586 then
+                questLabel:SetImage("Interface\\Icons\\inv_radiant_remnant")
+            end
+            if qid == 83333 then
+                questLabel:SetImage("Interface\\Icons\\inv_10_engineering_manufacturedparts_gear_uprez")
+            end
+
             questLabel:SetWidth(30)
             headerGroup:AddChild(questLabel)
         end

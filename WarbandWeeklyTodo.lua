@@ -1,3 +1,4 @@
+---@diagnostic disable: undefined-global
 --[[
 Warband Weekly Todo: An Ace3-based addon.
 Tracks specific currencies (IDs 3107 - 3110) across characters,
@@ -13,7 +14,7 @@ print("WarbandWeeklyTodo addon loaded")
 -- Define the currency IDs to track.
 local currencyIDs = {3107, 3108, 3109, 3110, 3028}
 -- Define the quest IDs to check for completion.
-local questIDs = {83333, 76586}
+local questIDs = {83333, 76586, 91173}
 -- Define icons for delve reward tiers
 local delveIcons = {
     rank1 = "|A:Professions-ChatIcon-Quality-Tier1:20:20|a",
