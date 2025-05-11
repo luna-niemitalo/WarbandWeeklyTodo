@@ -1,6 +1,15 @@
 ---@diagnostic disable: undefined-global
 local AceGUI = LibStub("AceGUI-3.0")
 
+-- Define column widths
+local COLUMN_WIDTHS = {
+    CHARACTER = 80,
+    CURRENCY = 25,
+    QUEST = 25,
+    DELVE = 80,
+    ITEM_SLOT = 35
+}
+
 -- Define slot headers at module level
 local SLOT_HEADERS = {
     { id = 1, short = "Hed", full = "Head" },
@@ -42,7 +51,7 @@ _G.WWWindow = {
             return nil
         end
         nameHeader:SetText("Character")
-        nameHeader:SetWidth(80)
+        nameHeader:SetWidth(COLUMN_WIDTHS.CHARACTER)
         headerGroup:AddChild(nameHeader)
 
         -- Currency headers
@@ -56,7 +65,7 @@ _G.WWWindow = {
             -- Show only the currency icon
             local iconText = info and info.iconFileID and "|T" .. info.iconFileID .. ":20:20:0:0:64:64:4:60:4:60|t" or "?"
             label:SetText(iconText)
-            label:SetWidth(30) -- Reduced width since we only show the icon
+            label:SetWidth(COLUMN_WIDTHS.CURRENCY)
             headerGroup:AddChild(label)
         end
 
@@ -74,7 +83,7 @@ _G.WWWindow = {
                 questLabel:SetImage("Interface\\Icons\\inv_10_engineering_manufacturedparts_gear_uprez")
             end
 
-            questLabel:SetWidth(30)
+            questLabel:SetWidth(COLUMN_WIDTHS.QUEST)
             headerGroup:AddChild(questLabel)
         end
 
@@ -85,7 +94,7 @@ _G.WWWindow = {
             return nil
         end
         delveHeader:SetText("Delve Rewards")
-        delveHeader:SetWidth(90)
+        delveHeader:SetWidth(COLUMN_WIDTHS.DELVE)
         headerGroup:AddChild(delveHeader)
 
         -- Item slot headers (excluding shirt and tabard)
@@ -96,7 +105,7 @@ _G.WWWindow = {
                 return nil
             end
             slotLabel:SetText(slotInfo.short)
-            slotLabel:SetWidth(25) -- Reduced width for shorter names
+            slotLabel:SetWidth(COLUMN_WIDTHS.ITEM_SLOT)
             headerGroup:AddChild(slotLabel)
         end
 
@@ -120,7 +129,7 @@ _G.WWWindow = {
             return nil
         end
         charLabel:SetText(name)
-        charLabel:SetWidth(80)
+        charLabel:SetWidth(COLUMN_WIDTHS.CHARACTER)
         rowGroup:AddChild(charLabel)
 
         -- Currency values
@@ -132,7 +141,7 @@ _G.WWWindow = {
                 return nil
             end
             label:SetText(cur and cur.quantity or "?")
-            label:SetWidth(30)
+            label:SetWidth(COLUMN_WIDTHS.CURRENCY)
             rowGroup:AddChild(label)
         end
 
@@ -145,7 +154,7 @@ _G.WWWindow = {
             end
             local completed = data.quests and data.quests[qid]
             questLabel:SetText(completed and "OK" or "X")
-            questLabel:SetWidth(30)
+            questLabel:SetWidth(COLUMN_WIDTHS.QUEST)
             rowGroup:AddChild(questLabel)
         end
 
@@ -170,7 +179,7 @@ _G.WWWindow = {
         end
 
         delveLabel:SetText(delveText)
-        delveLabel:SetWidth(90)
+        delveLabel:SetWidth(COLUMN_WIDTHS.DELVE)
         rowGroup:AddChild(delveLabel)
 
         -- Item slot status
@@ -179,6 +188,15 @@ _G.WWWindow = {
             if not slotLabel then
                 print("Error: Failed to create slot status label for:", slotInfo.short)
                 return nil
+            end
+
+            -- Get item level for this slot
+            local itemLevel = ""
+            if data.equipment and data.equipment[slotInfo.id] then
+                local item = data.equipment[slotInfo.id]
+                if item.itemLevel then
+                    itemLevel = tostring(item.itemLevel)
+                end
             end
 
             -- Check if this slot has an upgradeable item
@@ -207,8 +225,17 @@ _G.WWWindow = {
                 end
             end
 
-            slotLabel:SetImage(hasUpgrade and "Interface\\Buttons\\Arrow-Up-Up" or "")
-            slotLabel:SetWidth(25) -- Reduced width for shorter names
+            -- Combine item level and upgrade indicator
+            local displayText = itemLevel
+            if hasUpgrade then
+                displayText = displayText .. " |TInterface\\Buttons\\Arrow-Up-Up:0:0:0:0:64:64:4:60:4:60|t"
+            end
+            -- Add padding for empty slots to maintain alignment
+            if displayText == "" then
+                displayText = "   " -- Three spaces for padding
+            end
+            slotLabel:SetText(displayText)
+            slotLabel:SetWidth(COLUMN_WIDTHS.ITEM_SLOT)
             rowGroup:AddChild(slotLabel)
         end
 
@@ -258,7 +285,7 @@ _G.WWWindow = {
         frame:SetTitle("Warband Weekly Todo - Data")
         frame:SetStatusText("Data across all characters")
         frame:SetLayout("Flow")
-        frame:SetWidth(920)
+        frame:SetWidth(990)
         frame:SetHeight(400)
 
         -- Add header row
