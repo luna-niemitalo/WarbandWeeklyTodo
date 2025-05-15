@@ -10,17 +10,15 @@ local COLUMN_WIDTHS = {
     ITEM_SLOT = 25
 }
 
--- Define category icons based on item level ranges
-local CATEGORY_ICONS = {
+local CATEGORY_ICONS_2 = {
     NONE = "|TInterface\\Icons\\INV_Misc_QuestionMark:0:0:0:0:64:64:4:60:4:60|t",
-    EXPLORER = "|TInterface\\Icons\\INV_Cooking_80_BrownPotato:0:0:0:0:64:64:4:60:4:60|t",
-    ADVENTURER = "|A:Professions-ChatIcon-Quality-Tier1:0:0|a",
-    VETERAN = "|A:Professions-ChatIcon-Quality-Tier2:0:0|a",
-    CHAMPION = "|A:Professions-ChatIcon-Quality-Tier3:0:0|a",
-    HERO = "|A:Professions-ChatIcon-Quality-Tier4:0:0|a",
-    MYTH = "|A:Professions-ChatIcon-Quality-Tier5:0:0|a",
-    
-}
+    POTATO = "|TInterface\\Icons\\INV_Cooking_80_BrownPotato:0:0:0:0:64:64:4:60:4:60|t",
+    TIER1 = "|A:Professions-ChatIcon-Quality-Tier1:0:0|a",
+    TIER2 = "|A:Professions-ChatIcon-Quality-Tier2:0:0|a",
+    TIER3 = "|A:Professions-ChatIcon-Quality-Tier3:0:0|a",
+    TIER4 = "|A:Professions-ChatIcon-Quality-Tier4:0:0|a",
+    TIER5 = "|A:Professions-ChatIcon-Quality-Tier5:0:0|a",
+    }
 
 -- Define slot headers at module level
 local SLOT_HEADERS = {
@@ -49,23 +47,46 @@ local activeWindow = nil
 _G.WWWindow = {
     -- Add new function to get category icon based on item level
     GetCategoryIcon = function(itemLevel)
-        if not itemLevel then return CATEGORY_ICONS.NONE end
+        if not itemLevel then return CATEGORY_ICONS_2.NONE end
         
         -- Using the thresholds from the provided code
-        if itemLevel >= 662 then
-            return CATEGORY_ICONS.MYTH
-        elseif itemLevel >= 649 then
-            return CATEGORY_ICONS.HERO
-        elseif itemLevel >= 636 then
-            return CATEGORY_ICONS.CHAMPION
+        if itemLevel >= 671 then
+            return CATEGORY_ICONS_2.TIER5
+        elseif itemLevel >= 658 then
+            return CATEGORY_ICONS_2.TIER4
+        elseif itemLevel >= 645 then
+            return CATEGORY_ICONS_2.TIER3
+        elseif itemLevel >= 632 then
+            return CATEGORY_ICONS_2.TIER2
         elseif itemLevel >= 623 then
-            return CATEGORY_ICONS.VETERAN
-        elseif itemLevel >= 610 then
-            return CATEGORY_ICONS.ADVENTURER
+            return CATEGORY_ICONS_2.TIER1
         else
-            return CATEGORY_ICONS.EXPLORER
+            return CATEGORY_ICONS_2.POTATO
         end
     end,
+    GetUpgrade = function(itemLevel, currencies)
+        if not itemLevel or not currencies then return false end
+
+        -- Check if currencies exist
+        local weatheredCount = currencies[3107] and currencies[3107].quantity or 0
+        local carvedCount = currencies[3108] and currencies[3108].quantity or 0
+        local runedCount = currencies[3109] and currencies[3109].quantity or 0
+        local gildedCount = currencies[3110] and currencies[3110].quantity or 0
+
+        -- Check based on item level ranges
+        if itemLevel >= 658 and itemLevel < 671 and gildedCount >= 15 then
+            return true
+        elseif itemLevel >= 645 and itemLevel < 658 and runedCount >= 10 then
+            return true
+        elseif itemLevel >= 632 and itemLevel < 645 and carvedCount >= 10 then
+            return true
+        elseif itemLevel >= 623 and itemLevel < 632 and weatheredCount >= 10 then
+            return true
+        end
+
+        return false
+    end,
+
 
     CreateHeaderRow = function(currencyIDs, questIDs)
         local headerGroup = AceGUI:Create("SimpleGroup")
@@ -224,38 +245,18 @@ _G.WWWindow = {
 
             -- Get item level for this slot
             local itemLevel = ""
+            -- Check if this slot has an upgradeable item
+            local hasUpgrade = false
             if data.equipment and data.equipment[slotInfo.id] then
                 local item = data.equipment[slotInfo.id]
                 if item.itemLevel then
                     itemLevel = _G.WWWindow.GetCategoryIcon(item.itemLevel)
+                    hasUpgrade = _G.WWWindow.GetUpgrade(item.itemLevel, data.currencies)
                 end
             end
 
-            -- Check if this slot has an upgradeable item
-            local hasUpgrade = false
-            if data.equipmentUpgrades and data.equipmentUpgrades.items then
-                for _, item in ipairs(data.equipmentUpgrades.items) do
-                    if item.slotName == slotInfo.full then
-                        -- Check if we have enough crests for the upgrade
-                        local hasEnoughCrests = true
-                        if item.requiredCrest and item.requiredCrest ~= "None" then
-                            local crestCost = data.equipmentUpgrades.crestCosts and data.equipmentUpgrades.crestCosts[item.requiredCrest]
-                            if crestCost and crestCost.currencyID then
-                                local currencyInfo = data.currencies and data.currencies[crestCost.currencyID]
-                                if not currencyInfo or currencyInfo.quantity < crestCost.count then
-                                    hasEnoughCrests = false
-                                end
-                            else
-                                hasEnoughCrests = false
-                            end
-                        end
-                        if hasEnoughCrests then
-                            hasUpgrade = true
-                        end
-                        break
-                    end
-                end
-            end
+
+
 
             -- Combine category icon and upgrade indicator
             local displayText = itemLevel
@@ -264,7 +265,7 @@ _G.WWWindow = {
             end
             -- Add padding for empty slots to maintain alignment
             if displayText == "" then
-                displayText = CATEGORY_ICONS.NONE
+                displayText = CATEGORY_ICONS_2.NONE
             end
             slotLabel:SetText(displayText)
             slotLabel:SetWidth(COLUMN_WIDTHS.ITEM_SLOT)
