@@ -7,7 +7,19 @@ local COLUMN_WIDTHS = {
     CURRENCY = 25,
     QUEST = 25,
     DELVE = 80,
-    ITEM_SLOT = 35
+    ITEM_SLOT = 25
+}
+
+-- Define category icons based on item level ranges
+local CATEGORY_ICONS = {
+    NONE = "|TInterface\\Icons\\INV_Misc_QuestionMark:0:0:0:0:64:64:4:60:4:60|t",
+    EXPLORER = "|TInterface\\Icons\\INV_Cooking_80_BrownPotato:0:0:0:0:64:64:4:60:4:60|t",
+    ADVENTURER = "|A:Professions-ChatIcon-Quality-Tier1:0:0|a",
+    VETERAN = "|A:Professions-ChatIcon-Quality-Tier2:0:0|a",
+    CHAMPION = "|A:Professions-ChatIcon-Quality-Tier3:0:0|a",
+    HERO = "|A:Professions-ChatIcon-Quality-Tier4:0:0|a",
+    MYTH = "|A:Professions-ChatIcon-Quality-Tier5:0:0|a",
+    
 }
 
 -- Define slot headers at module level
@@ -35,6 +47,26 @@ local SLOT_HEADERS = {
 local activeWindow = nil
 
 _G.WWWindow = {
+    -- Add new function to get category icon based on item level
+    GetCategoryIcon = function(itemLevel)
+        if not itemLevel then return CATEGORY_ICONS.NONE end
+        
+        -- Using the thresholds from the provided code
+        if itemLevel >= 662 then
+            return CATEGORY_ICONS.MYTH
+        elseif itemLevel >= 649 then
+            return CATEGORY_ICONS.HERO
+        elseif itemLevel >= 636 then
+            return CATEGORY_ICONS.CHAMPION
+        elseif itemLevel >= 623 then
+            return CATEGORY_ICONS.VETERAN
+        elseif itemLevel >= 610 then
+            return CATEGORY_ICONS.ADVENTURER
+        else
+            return CATEGORY_ICONS.EXPLORER
+        end
+    end,
+
     CreateHeaderRow = function(currencyIDs, questIDs)
         local headerGroup = AceGUI:Create("SimpleGroup")
         if not headerGroup then
@@ -195,7 +227,7 @@ _G.WWWindow = {
             if data.equipment and data.equipment[slotInfo.id] then
                 local item = data.equipment[slotInfo.id]
                 if item.itemLevel then
-                    itemLevel = tostring(item.itemLevel)
+                    itemLevel = _G.WWWindow.GetCategoryIcon(item.itemLevel)
                 end
             end
 
@@ -225,14 +257,14 @@ _G.WWWindow = {
                 end
             end
 
-            -- Combine item level and upgrade indicator
+            -- Combine category icon and upgrade indicator
             local displayText = itemLevel
             if hasUpgrade then
                 displayText = displayText .. " |TInterface\\Buttons\\Arrow-Up-Up:0:0:0:0:64:64:4:60:4:60|t"
             end
             -- Add padding for empty slots to maintain alignment
             if displayText == "" then
-                displayText = "   " -- Three spaces for padding
+                displayText = CATEGORY_ICONS.NONE
             end
             slotLabel:SetText(displayText)
             slotLabel:SetWidth(COLUMN_WIDTHS.ITEM_SLOT)
@@ -285,7 +317,7 @@ _G.WWWindow = {
         frame:SetTitle("Warband Weekly Todo - Data")
         frame:SetStatusText("Data across all characters")
         frame:SetLayout("Flow")
-        frame:SetWidth(990)
+        frame:SetWidth(840)
         frame:SetHeight(400)
 
         -- Add header row
