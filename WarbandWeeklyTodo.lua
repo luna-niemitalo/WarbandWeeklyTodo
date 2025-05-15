@@ -181,11 +181,20 @@ function WarbandWeeklyTodo:UpdateCharacterData()
         ["Gilded"] = { count = 0, currencyID = 3110 }
     }
 
+    -- Store equipment data including item levels
+    local equipment = {}
+
     for slotID, slotName in pairs(INVENTORY_SLOT_NAMES) do
         local itemLink = GetInventoryItemLink("player", slotID)
         if itemLink then
             local actualItemLevel = GetDetailedItemLevelInfo(itemLink)
             local canUpgrade = false
+            
+            -- Store equipment data
+            equipment[slotID] = {
+                itemLevel = actualItemLevel,
+                itemLink = itemLink
+            }
             
             if C_ItemUpgrade then
                 local itemLocation = ItemLocation:CreateFromEquipmentSlot(slotID)
@@ -237,6 +246,7 @@ function WarbandWeeklyTodo:UpdateCharacterData()
         currencies = currencies,
         quests = quests,
         delveRewards = delveRewards,
+        equipment = equipment,
         equipmentUpgrades = {
             items = upgradeableItems,
             crestCosts = crestCosts

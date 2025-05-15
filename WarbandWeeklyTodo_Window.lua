@@ -1,7 +1,72 @@
 ---@diagnostic disable: undefined-global
 local AceGUI = LibStub("AceGUI-3.0")
 
+-- Define column widths
+local COLUMN_WIDTHS = {
+    CHARACTER = 80,
+    CURRENCY = 25,
+    QUEST = 25,
+    DELVE = 80,
+    ITEM_SLOT = 25
+}
+
+-- Define category icons based on item level ranges
+local CATEGORY_ICONS = {
+    NONE = "|TInterface\\Icons\\INV_Misc_QuestionMark:0:0:0:0:64:64:4:60:4:60|t",
+    EXPLORER = "|TInterface\\Icons\\INV_Cooking_80_BrownPotato:0:0:0:0:64:64:4:60:4:60|t",
+    ADVENTURER = "|A:Professions-ChatIcon-Quality-Tier1:0:0|a",
+    VETERAN = "|A:Professions-ChatIcon-Quality-Tier2:0:0|a",
+    CHAMPION = "|A:Professions-ChatIcon-Quality-Tier3:0:0|a",
+    HERO = "|A:Professions-ChatIcon-Quality-Tier4:0:0|a",
+    MYTH = "|A:Professions-ChatIcon-Quality-Tier5:0:0|a",
+    
+}
+
+-- Define slot headers at module level
+local SLOT_HEADERS = {
+    { id = 1, short = "Hed", full = "Head" },
+    { id = 2, short = "Nek", full = "Neck" },
+    { id = 3, short = "Shl", full = "Shoulder" },
+    { id = 5, short = "Cst", full = "Chest" },
+    { id = 6, short = "Wst", full = "Waist" },
+    { id = 7, short = "Lgs", full = "Legs" },
+    { id = 8, short = "Fet", full = "Feet" },
+    { id = 9, short = "Wrs", full = "Wrist" },
+    { id = 10, short = "Hnd", full = "Hands" },
+    { id = 11, short = "Fg1", full = "Finger1" },
+    { id = 12, short = "Fg2", full = "Finger2" },
+    { id = 13, short = "Tr1", full = "Trinket1" },
+    { id = 14, short = "Tr2", full = "Trinket2" },
+    { id = 15, short = "Bck", full = "Back" },
+    { id = 16, short = "Mh", full = "MainHand" },
+    { id = 17, short = "Oh", full = "OffHand" },
+    { id = 18, short = "Rng", full = "Ranged" }
+}
+
+-- Store the active window reference
+local activeWindow = nil
+
 _G.WWWindow = {
+    -- Add new function to get category icon based on item level
+    GetCategoryIcon = function(itemLevel)
+        if not itemLevel then return CATEGORY_ICONS.NONE end
+        
+        -- Using the thresholds from the provided code
+        if itemLevel >= 662 then
+            return CATEGORY_ICONS.MYTH
+        elseif itemLevel >= 649 then
+            return CATEGORY_ICONS.HERO
+        elseif itemLevel >= 636 then
+            return CATEGORY_ICONS.CHAMPION
+        elseif itemLevel >= 623 then
+            return CATEGORY_ICONS.VETERAN
+        elseif itemLevel >= 610 then
+            return CATEGORY_ICONS.ADVENTURER
+        else
+            return CATEGORY_ICONS.EXPLORER
+        end
+    end,
+
     CreateHeaderRow = function(currencyIDs, questIDs)
         local headerGroup = AceGUI:Create("SimpleGroup")
         if not headerGroup then
@@ -18,7 +83,7 @@ _G.WWWindow = {
             return nil
         end
         nameHeader:SetText("Character")
-        nameHeader:SetWidth(80)
+        nameHeader:SetWidth(COLUMN_WIDTHS.CHARACTER)
         headerGroup:AddChild(nameHeader)
 
         -- Currency headers
@@ -32,7 +97,7 @@ _G.WWWindow = {
             -- Show only the currency icon
             local iconText = info and info.iconFileID and "|T" .. info.iconFileID .. ":20:20:0:0:64:64:4:60:4:60|t" or "?"
             label:SetText(iconText)
-            label:SetWidth(30) -- Reduced width since we only show the icon
+            label:SetWidth(COLUMN_WIDTHS.CURRENCY)
             headerGroup:AddChild(label)
         end
 
@@ -50,7 +115,7 @@ _G.WWWindow = {
                 questLabel:SetImage("Interface\\Icons\\inv_10_engineering_manufacturedparts_gear_uprez")
             end
 
-            questLabel:SetWidth(30)
+            questLabel:SetWidth(COLUMN_WIDTHS.QUEST)
             headerGroup:AddChild(questLabel)
         end
 
@@ -61,18 +126,20 @@ _G.WWWindow = {
             return nil
         end
         delveHeader:SetText("Delve Rewards")
-        delveHeader:SetWidth(90)
+        delveHeader:SetWidth(COLUMN_WIDTHS.DELVE)
         headerGroup:AddChild(delveHeader)
 
-        -- Upgrades header
-        local upgradeHeader = AceGUI:Create("Label")
-        if not upgradeHeader then
-            print("Error: Failed to create upgrade header")
-            return nil
+        -- Item slot headers (excluding shirt and tabard)
+        for _, slotInfo in ipairs(SLOT_HEADERS) do
+            local slotLabel = AceGUI:Create("Label")
+            if not slotLabel then
+                print("Error: Failed to create slot label for:", slotInfo.short)
+                return nil
+            end
+            slotLabel:SetText(slotInfo.short)
+            slotLabel:SetWidth(COLUMN_WIDTHS.ITEM_SLOT)
+            headerGroup:AddChild(slotLabel)
         end
-        upgradeHeader:SetText("Upgrades")
-        upgradeHeader:SetWidth(120)
-        headerGroup:AddChild(upgradeHeader)
 
         return headerGroup
     end,
@@ -94,7 +161,7 @@ _G.WWWindow = {
             return nil
         end
         charLabel:SetText(name)
-        charLabel:SetWidth(80)
+        charLabel:SetWidth(COLUMN_WIDTHS.CHARACTER)
         rowGroup:AddChild(charLabel)
 
         -- Currency values
@@ -106,7 +173,7 @@ _G.WWWindow = {
                 return nil
             end
             label:SetText(cur and cur.quantity or "?")
-            label:SetWidth(30)
+            label:SetWidth(COLUMN_WIDTHS.CURRENCY)
             rowGroup:AddChild(label)
         end
 
@@ -119,7 +186,7 @@ _G.WWWindow = {
             end
             local completed = data.quests and data.quests[qid]
             questLabel:SetText(completed and "OK" or "X")
-            questLabel:SetWidth(30)
+            questLabel:SetWidth(COLUMN_WIDTHS.QUEST)
             rowGroup:AddChild(questLabel)
         end
 
@@ -144,44 +211,65 @@ _G.WWWindow = {
         end
 
         delveLabel:SetText(delveText)
-        delveLabel:SetWidth(90)
+        delveLabel:SetWidth(COLUMN_WIDTHS.DELVE)
         rowGroup:AddChild(delveLabel)
 
-        -- Upgrade data
-        local upgradeLabel = AceGUI:Create("Label")
-        if not upgradeLabel then
-            print("Error: Failed to create upgrade label")
-            return nil
-        end
+        -- Item slot status
+        for _, slotInfo in ipairs(SLOT_HEADERS) do
+            local slotLabel = AceGUI:Create("Label")
+            if not slotLabel then
+                print("Error: Failed to create slot status label for:", slotInfo.short)
+                return nil
+            end
 
-        local upgradeText = ""
-        if data.equipmentUpgrades and data.equipmentUpgrades.items and #data.equipmentUpgrades.items > 0 then
-            -- Show number of upgradeable items
-            upgradeText = string.format("%d items", #data.equipmentUpgrades.items)
-            
-            -- Add crest costs if any
-            if data.equipmentUpgrades.crestCosts then
-                local crestText = ""
-                for crestType, cost in pairs(data.equipmentUpgrades.crestCosts) do
-                    if cost.count > 0 then
-                        local info = C_CurrencyInfo and C_CurrencyInfo.GetCurrencyInfo(cost.currencyID)
-                        if info and info.iconFileID then
-                            crestText = crestText .. string.format(" |T%d:20:20:0:0:64:64:4:60:4:60|t%d", 
-                                info.iconFileID, cost.count)
-                        end
-                    end
-                end
-                if crestText ~= "" then
-                    upgradeText = upgradeText .. crestText
+            -- Get item level for this slot
+            local itemLevel = ""
+            if data.equipment and data.equipment[slotInfo.id] then
+                local item = data.equipment[slotInfo.id]
+                if item.itemLevel then
+                    itemLevel = _G.WWWindow.GetCategoryIcon(item.itemLevel)
                 end
             end
-        else
-            upgradeText = "None"
-        end
 
-        upgradeLabel:SetText(upgradeText)
-        upgradeLabel:SetWidth(120)
-        rowGroup:AddChild(upgradeLabel)
+            -- Check if this slot has an upgradeable item
+            local hasUpgrade = false
+            if data.equipmentUpgrades and data.equipmentUpgrades.items then
+                for _, item in ipairs(data.equipmentUpgrades.items) do
+                    if item.slotName == slotInfo.full then
+                        -- Check if we have enough crests for the upgrade
+                        local hasEnoughCrests = true
+                        if item.requiredCrest and item.requiredCrest ~= "None" then
+                            local crestCost = data.equipmentUpgrades.crestCosts and data.equipmentUpgrades.crestCosts[item.requiredCrest]
+                            if crestCost and crestCost.currencyID then
+                                local currencyInfo = data.currencies and data.currencies[crestCost.currencyID]
+                                if not currencyInfo or currencyInfo.quantity < crestCost.count then
+                                    hasEnoughCrests = false
+                                end
+                            else
+                                hasEnoughCrests = false
+                            end
+                        end
+                        if hasEnoughCrests then
+                            hasUpgrade = true
+                        end
+                        break
+                    end
+                end
+            end
+
+            -- Combine category icon and upgrade indicator
+            local displayText = itemLevel
+            if hasUpgrade then
+                displayText = displayText .. " |TInterface\\Buttons\\Arrow-Up-Up:0:0:0:0:64:64:4:60:4:60|t"
+            end
+            -- Add padding for empty slots to maintain alignment
+            if displayText == "" then
+                displayText = CATEGORY_ICONS.NONE
+            end
+            slotLabel:SetText(displayText)
+            slotLabel:SetWidth(COLUMN_WIDTHS.ITEM_SLOT)
+            rowGroup:AddChild(slotLabel)
+        end
 
         return rowGroup
     end,
@@ -208,6 +296,13 @@ _G.WWWindow = {
             print("Error: AceGUI library not found")
             return
         end
+
+        -- If a window already exists, bring it to front and return
+        if activeWindow then
+            activeWindow:Show()
+            activeWindow:SetStatusText("Data across all characters")
+            return
+        end
         
         -- Create the main frame
         local frame = AceGUI:Create("Frame")
@@ -215,11 +310,14 @@ _G.WWWindow = {
             print("Error: Failed to create main frame")
             return
         end
+
+        -- Store the window reference
+        activeWindow = frame
         
         frame:SetTitle("Warband Weekly Todo - Data")
         frame:SetStatusText("Data across all characters")
         frame:SetLayout("Flow")
-        frame:SetWidth(800)
+        frame:SetWidth(840)
         frame:SetHeight(400)
 
         -- Add header row
@@ -241,5 +339,11 @@ _G.WWWindow = {
                 print("Error: Failed to create row for character:", key)
             end
         end
+
+        -- Set up close callback to clear the window reference
+        frame:SetCallback("OnClose", function(widget)
+            AceGUI:Release(widget)
+            activeWindow = nil
+        end)
     end
 }
