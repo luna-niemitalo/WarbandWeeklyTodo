@@ -1,13 +1,22 @@
 ---@diagnostic disable: undefined-global
 local AceGUI = LibStub("AceGUI-3.0")
 
+-- Initialize the global window module
+_G.WWWindow = _G.WWWindow or {}
+
 -- Define column widths
 local COLUMN_WIDTHS = {
     CHARACTER = 80,
     CURRENCY = 25,
     QUEST = 25,
     DELVE = 80,
-    ITEM_SLOT = 25
+    ITEM_SLOT = 25,
+    RADIANT_ECHO = 25  -- Add new column width
+}
+
+local CREST_UPGRADE_AMOUNTS = {
+    NORMAL = 15,
+    DISCOUNT = 10
 }
 
 local CATEGORY_ICONS_2 = {
@@ -45,6 +54,15 @@ local SLOT_HEADERS = {
 local activeWindow = nil
 
 _G.WWWindow = {
+    GetLowestItemLevel = function(equipment)
+        local lowestItemLevel = 9999
+        for _, item in pairs(equipment) do
+            if item.itemLevel and item.itemLevel < lowestItemLevel then
+                lowestItemLevel = item.itemLevel
+            end
+        end
+        return lowestItemLevel
+    end,
     -- Add new function to get category icon based on item level
     GetCategoryIcon = function(itemLevel)
         if not itemLevel then return CATEGORY_ICONS_2.NONE end
@@ -64,7 +82,7 @@ _G.WWWindow = {
             return CATEGORY_ICONS_2.POTATO
         end
     end,
-    GetUpgrade = function(itemLevel, currencies)
+    GetUpgrade = function(itemLevel, currencies, lowestItemLevel)
         if not itemLevel or not currencies then return false end
 
         -- Check if currencies exist
@@ -72,15 +90,19 @@ _G.WWWindow = {
         local carvedCount = currencies[3108] and currencies[3108].quantity or 0
         local runedCount = currencies[3109] and currencies[3109].quantity or 0
         local gildedCount = currencies[3110] and currencies[3110].quantity or 0
+        local upgradeAmount = CREST_UPGRADE_AMOUNTS.DISCOUNT
+        if lowestItemLevel < 658 then
+            upgradeAmount = CREST_UPGRADE_AMOUNTS.NORMAL
+        end
 
         -- Check based on item level ranges
-        if itemLevel >= 658 and itemLevel < 671 and gildedCount >= 15 then
+        if itemLevel >= 658 and itemLevel < 671 and gildedCount >= CREST_UPGRADE_AMOUNTS.NORMAL then
             return true
-        elseif itemLevel >= 645 and itemLevel < 658 and runedCount >= 10 then
+        elseif itemLevel >= 645 and itemLevel < 658 and runedCount >= upgradeAmount then
             return true
-        elseif itemLevel >= 632 and itemLevel < 645 and carvedCount >= 10 then
+        elseif itemLevel >= 632 and itemLevel < 645 and carvedCount >= upgradeAmount then
             return true
-        elseif itemLevel >= 623 and itemLevel < 632 and weatheredCount >= 10 then
+        elseif itemLevel >= 623 and itemLevel < 632 and weatheredCount >= upgradeAmount then
             return true
         end
 
@@ -121,6 +143,16 @@ _G.WWWindow = {
             label:SetWidth(COLUMN_WIDTHS.CURRENCY)
             headerGroup:AddChild(label)
         end
+
+        -- Radiant Echo header
+        local radiantEchoHeader = AceGUI:Create("Label")
+        if not radiantEchoHeader then
+            print("Error: Failed to create Radiant Echo header")
+            return nil
+        end
+        radiantEchoHeader:SetText("|T" .. GetItemIcon(235897) .. ":20:20:0:0:64:64:4:60:4:60|t")
+        radiantEchoHeader:SetWidth(COLUMN_WIDTHS.RADIANT_ECHO)
+        headerGroup:AddChild(radiantEchoHeader)
 
         -- Quest headers
         for _, qid in ipairs(questIDs) do
@@ -198,6 +230,16 @@ _G.WWWindow = {
             rowGroup:AddChild(label)
         end
 
+        -- Radiant Echo count
+        local radiantEchoLabel = AceGUI:Create("Label")
+        if not radiantEchoLabel then
+            print("Error: Failed to create Radiant Echo count label")
+            return nil
+        end
+        radiantEchoLabel:SetText(data.radiantEcho or "0")
+        radiantEchoLabel:SetWidth(COLUMN_WIDTHS.RADIANT_ECHO)
+        rowGroup:AddChild(radiantEchoLabel)
+
         -- Quest completion status
         for _, qid in ipairs(questIDs) do
             local questLabel = AceGUI:Create("Label")
@@ -249,9 +291,10 @@ _G.WWWindow = {
             local hasUpgrade = false
             if data.equipment and data.equipment[slotInfo.id] then
                 local item = data.equipment[slotInfo.id]
+                local lowestItemLevel = _G.WWWindow.GetLowestItemLevel(data.equipment)
                 if item.itemLevel then
                     itemLevel = _G.WWWindow.GetCategoryIcon(item.itemLevel)
-                    hasUpgrade = _G.WWWindow.GetUpgrade(item.itemLevel, data.currencies)
+                    hasUpgrade = _G.WWWindow.GetUpgrade(item.itemLevel, data.currencies, lowestItemLevel)
                 end
             end
 
@@ -318,7 +361,7 @@ _G.WWWindow = {
         frame:SetTitle("Warband Weekly Todo - Data")
         frame:SetStatusText("Data across all characters")
         frame:SetLayout("Flow")
-        frame:SetWidth(840)
+        frame:SetWidth(865)
         frame:SetHeight(400)
 
         -- Add header row
