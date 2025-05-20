@@ -95,6 +95,9 @@ function WarbandWeeklyTodo:UpdateCharacterData()
     local realm = GetRealmName()
     local key = realm .. " - " .. name
 
+    -- Get Radiant Echo count
+    local radiantEchoCount = GetItemCount(235897) -- This will get count from bags and bank
+
     -- Prepare a table to store currency data.
     local currencies = {}
     for _, id in ipairs(currencyIDs) do
@@ -135,10 +138,8 @@ function WarbandWeeklyTodo:UpdateCharacterData()
         end
     end
 
-
     -- Store equipment data including item levels
     local equipment = {}
-
 
     for slotID, slotName in pairs(INVENTORY_SLOT_NAMES) do
         local itemLink = GetInventoryItemLink("player", slotID)
@@ -159,6 +160,7 @@ function WarbandWeeklyTodo:UpdateCharacterData()
         quests = quests,
         delveRewards = delveRewards,
         equipment = equipment,
+        radiantEcho = radiantEchoCount -- Store just the count
     }
 
     self:Print("Updated data for " .. key)
